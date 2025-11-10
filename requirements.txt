@@ -1,10 +1,50 @@
-streamlit
-pandas
-numpy
-matplotlib
-plotly
-prophet
-geopandas
-folium
-requests
+# ============================================================
+# OPTIMET-BCN — Requirements (2025 edition)
+# Compatible with Python 3.10+ on macOS / Windows / Linux
+# ============================================================
+
+# ---- Core ----
+streamlit==1.40.0
+pandas==2.2.3
+numpy==1.26.4
+
+# ---- Visualization ----
+plotly==5.24.1
+pydeck==0.9.1
+matplotlib==3.9.2
+seaborn==0.13.2
+folium==0.17.0
+
+# ---- Geospatial ----
+geopandas==1.0.1
+shapely==2.0.6
+fiona==1.10.1
+pyproj==3.7.0
+rtree==1.3.0
+
+# ---- Machine Learning / Forecasting ----
+prophet==1.1.6
+scikit-learn==1.5.2
+
+# ---- Optimization ----
+scipy==1.14.1
+ortools==9.11.4210
+
+# ---- Data I/O and Performance ----
+pyarrow==17.0.0
+openpyxl==3.1.5
+tqdm==4.66.5
+joblib==1.4.2
+
+# ---- Utilities / Networking ----
+requests==2.32.3
+python-dateutil==2.9.0.post0
+
+# ---- Optional (maps & caching) ----
+branca==0.7.2          # folium dependency
+cachetools==5.5.0
+
+# ---- Developer Tools ----
+ipykernel==6.29.5
+jupyterlab==4.2.5
 
