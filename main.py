@@ -1,7 +1,10 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
+import plotly.express as px
+import os
 from tabs.prediccion_od import main as prediccion_od_main
+from tabs.weather_events import render_weather_events
 
 from utils.state_manager import StateManager
 from utils.load_data import load_data
@@ -109,8 +112,91 @@ tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
 # -------------------------------------------------------------
 with tab1:
     st.header("Exploración de Datos")
-    st.warning("⚠️ Módulo en desarrollo.")
+    st.markdown("### 📁 Carga y vista general del dataset")
 
+    try:
+        df = load_dataset_fast()
+        st.success("Dataset cargado correctamente")
+    except Exception as e:
+        st.error(f"Error cargando dataset: {e}")
+        st.stop()
+
+    # Vista previa
+    st.subheader("📋 Vista previa")
+    st.dataframe(df.head(10))
+
+    # KPIs
+    st.subheader("📈 KPIs principales")
+    col1, col2, col3 = st.columns(3)
+    col1.metric("Número de registros", f"{len(df):,}")
+    col2.metric("Número de columnas", len(df.columns))
+
+    if "day" in df.columns:
+        df["day"] = pd.to_datetime(df["day"])
+        col3.metric("Rango temporal", f"{df['day'].min()} → {df['day'].max()}")
+
+    # Histogramas
+    st.subheader("📊 Histogramas básicos")
+
+    h1, h2 = st.columns(2)
+
+    with h1:
+        st.markdown("**Viajes por día**")
+        if "viajes" in df.columns:
+            daily = df.groupby("day")["viajes"].sum().reset_index()
+            fig = px.bar(daily, x="day", y="viajes")
+            st.plotly_chart(fig, use_container_width=True)
+
+    with h2:
+        st.markdown("**Viajes por día de la semana**")
+        df["weekday"] = df["day"].dt.day_name()
+        week = df.groupby("weekday")["viajes"].sum().reindex([
+            "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"
+        ])
+        fig = px.bar(week, x=week.index, y=week.values)
+        st.plotly_chart(fig, use_container_width=True)
+
+    # Outliers
+    st.subheader("🚨 Detección de outliers")
+    daily["zscore"] = (daily["viajes"] - daily["viajes"].mean()) / daily["viajes"].std()
+    outliers = daily[np.abs(daily["zscore"]) > 3]
+    st.dataframe(outliers)
+
+    st.markdown("**Registros con 'viajes = 0'**")
+    st.dataframe(df[df["viajes"] == 0].head(20))
+
+    # Mapa
+    st.subheader("🗺️ Mapa de densidad por municipio")
+    if os.path.exists(GEOJSON_FILE):
+        try:
+            import geopandas as gpd
+            import pydeck as pdk
+
+            gdf = gpd.read_file(GEOJSON_FILE)
+            viajes_por_comarca = df.groupby("nom_comar")["viajes"].sum().reset_index()
+            gdf = gdf.merge(viajes_por_comarca, on="nom_comar", how="left")
+            gdf["viajes"] = gdf["viajes"].fillna(0)
+
+            layer = pdk.Layer(
+                "GeoJsonLayer",
+                data=gdf,
+                get_fill_color="[min(255, viajes/1000), 50, 150]",
+                get_line_color=[0, 0, 0],
+                pickable=True,
+            )
+
+            view_state = pdk.ViewState(
+                latitude=gdf.geometry.centroid.y.mean(),
+                longitude=gdf.geometry.centroid.x.mean(),
+                zoom=8
+            )
+
+            st.pydeck_chart(pdk.Deck(layers=[layer], initial_view_state=view_state))
+
+        except Exception as e:
+            st.error(f"Error cargando el mapa: {e}")
+    else:
+        st.warning("❗ No se encontró comarques-barcelona.geojson en data/")
 
 # -------------------------------------------------------------
 # Tab 2
@@ -131,7 +217,7 @@ with tab3:
 # -------------------------------------------------------------
 with tab4:
     st.header("Clima y Eventos")
-    st.warning("⚠️ Módulo en desarrollo.")
+    render_weather_events()
 
 
 # -------------------------------------------------------------
