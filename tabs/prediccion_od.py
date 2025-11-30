@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import altair as alt
 
-from src.prediccion_od import (
+from tabs.prediccion_od_src import (
     cargar_o_entrenar,
     predecir_od
 )
@@ -75,3 +75,4 @@ def main():
             st.info("📉 La predicción está **por debajo de la media histórica**.")
         else:
             st.info("🔎 La predicción está **dentro de un rango normal histórico**.")
+
