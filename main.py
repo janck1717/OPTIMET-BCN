@@ -165,36 +165,7 @@ with tab1:
     st.markdown("**Registros con 'viajes = 0'**")
     st.dataframe(df[df["viajes"] == 0].head(20))
 
-    # Mapa
-    st.subheader("🗺️ Mapa de densidad por municipio")
-    if os.path.exists(GEOJSON_FILE):
-        try:
-            import geopandas as gpd
-            import pydeck as pdk
-
-            gdf = gpd.read_file(GEOJSON_FILE)
-            viajes_por_comarca = df.groupby("nom_comar")["viajes"].sum().reset_index()
-            gdf = gdf.merge(viajes_por_comarca, on="nom_comar", how="left")
-            gdf["viajes"] = gdf["viajes"].fillna(0)
-
-            layer = pdk.Layer(
-                "GeoJsonLayer",
-                data=gdf,
-                get_fill_color="[min(255, viajes/1000), 50, 150]",
-                get_line_color=[0, 0, 0],
-                pickable=True,
-            )
-
-            view_state = pdk.ViewState(
-                latitude=gdf.geometry.centroid.y.mean(),
-                longitude=gdf.geometry.centroid.x.mean(),
-                zoom=8
-            )
-
-            st.pydeck_chart(pdk.Deck(layers=[layer], initial_view_state=view_state))
-
-        except Exception as e:
-            st.error(f"Error cargando el mapa: {e}")
+   
     else:
         st.warning("❗ No se encontró comarques-barcelona.geojson en data/")
 
